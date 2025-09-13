@@ -108,10 +108,6 @@ func TestHTMLParser_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			parser := NewHTMLParser()
 			parser.Parse(strings.NewReader(tt.html))
-			//if err != nil {
-			//	t.Fatalf("Unexpected error: %v", err)
-			//}
-
 			links := parser.GetLinks()
 
 			// Compare lengths first for clearer failure messages

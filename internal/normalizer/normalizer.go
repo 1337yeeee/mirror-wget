@@ -29,6 +29,10 @@ func (n *DefaultNormalizer) Normalize(baseURL, ref string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if u.Host != base.Host {
+		return "", nil
+	}
+
 	u.Fragment = "" // отбрасываем #anchor
 	// приводим схему и хост к нижнему регистру
 	u.Scheme = strings.ToLower(u.Scheme)

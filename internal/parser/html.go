@@ -27,16 +27,19 @@ var SRC_ATOMS = map[atom.Atom]bool{
 	atom.Video:  true, // <video>
 }
 
+// HTMLParser представляет структуру, которая хранит ссылки, извлеченные из HTML
 type HTMLParser struct {
 	Links map[string]bool
 }
 
+// NewHTMLParser инициализирует HTMLParser
 func NewHTMLParser() LinkParser {
 	return &HTMLParser{
 		Links: make(map[string]bool),
 	}
 }
 
+// Parse парсит HTML-документ
 func (p *HTMLParser) Parse(r io.Reader) error {
 	tokenizer := html.NewTokenizer(r)
 	tType := tokenizer.Next()

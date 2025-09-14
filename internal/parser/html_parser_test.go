@@ -34,7 +34,7 @@ func TestHTMLParser_Parse(t *testing.T) {
 		{
 			name:   "links with quotes and spaces",
 			html:   `<a href=" https://google.com ">Google</a> <a href='https://bing.com'>Bing</a>`,
-			expect: []string{" https://google.com ", "https://bing.com"},
+			expect: []string{"https://google.com", "https://bing.com"},
 		},
 		{
 			name:   "mixed case attribute",
@@ -102,6 +102,30 @@ func TestHTMLParser_Parse(t *testing.T) {
 			`,
 			expect: []string{"", "/products", "/contact", "/privacy"},
 		},
+		{
+			name:   "links with white spaces",
+			html:   `<a href=" left_white_space">left</a><a href="right_white_space ">right</a><a href=" left_and_right_spaces ">left and right</a>`,
+			expect: []string{"left_white_space", "right_white_space", "left_and_right_spaces"},
+		},
+		{
+			name: "one link several times",
+			html: `
+				<a href="link">link1</a>
+				<a href="link">link2</a>
+				<a href="link">link3</a>
+			`,
+			expect: []string{"link"},
+		},
+		{
+			name: "one link several times plus white spaces",
+			html: `
+				<a href="link">link1</a>
+				<a href=" link">linkL</a>
+				<a href="link ">linkR</a>
+				<a href=" link ">linkLR</a>
+			`,
+			expect: []string{"link"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -110,12 +134,12 @@ func TestHTMLParser_Parse(t *testing.T) {
 			parser.Parse(strings.NewReader(tt.html))
 			links := parser.GetLinks()
 
-			// Compare lengths first for clearer failure messages
+			// сравнение длины полученных и ожидаемых ссылок
 			if len(links) != len(tt.expect) {
 				t.Errorf("Expected %d links, got %d", len(tt.expect), len(links))
 			}
 
-			// Check if all expected links are present (order doesn't matter)
+			// проверяем что все нужные ссылки присутствуют (порядок не важен)
 			gotMap := make(map[string]bool)
 			for _, link := range links {
 				gotMap[link] = true
@@ -126,7 +150,7 @@ func TestHTMLParser_Parse(t *testing.T) {
 				}
 			}
 
-			// Optional: also check no extra links
+			// нет лишних ссылок
 			if len(gotMap) != len(tt.expect) {
 				t.Errorf("Got extra links: %+v", links)
 			}

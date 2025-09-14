@@ -73,6 +73,7 @@ func (p *HTMLParser) extractAndAddLink(token html.Token, attrKey string) {
 	for _, attr := range token.Attr {
 		if attr.Key == attrKey {
 			link := strings.TrimRight(attr.Val, "/")
+			link = strings.TrimSpace(link)
 			p.Links[link] = true
 			return
 		}

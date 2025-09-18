@@ -5,9 +5,12 @@ import (
 	"flag"
 )
 
+const DefaultLevel = 1
+
 // Config конфигурация утилиты
 type Config struct {
-	URL string
+	URL   string
+	Level int
 }
 
 // NewConfig собирает конфигурацию утилиты из флагов и аргументов командной строки
@@ -21,6 +24,7 @@ func NewConfig() (*Config, error) {
 
 	var config Config
 	config.URL = args[0]
+	config.Level = DefaultLevel
 
 	return &config, nil
 }

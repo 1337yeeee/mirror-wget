@@ -7,16 +7,16 @@ import (
 	"strings"
 )
 
-// HREF_ATOMS представляет множество atom'ов HTML тегов, которые могут содержать валидный href атрибут
-var HREF_ATOMS = map[atom.Atom]bool{
+// HrefAtoms представляет множество atom'ов HTML тегов, которые могут содержать валидный href атрибут
+var HrefAtoms = map[atom.Atom]bool{
 	atom.A:    true, // <a>
 	atom.Area: true, // <area>
 	atom.Base: true, // <base>
 	atom.Link: true, // <link>
 }
 
-// SRC_ATOMS представляет множество atom'ов HTML тегов, которые могут содержать валидный src атрибут
-var SRC_ATOMS = map[atom.Atom]bool{
+// SrcAtoms представляет множество atom'ов HTML тегов, которые могут содержать валидный src атрибут
+var SrcAtoms = map[atom.Atom]bool{
 	atom.Audio:  true, // <audio>
 	atom.Embed:  true, // <embed>
 	atom.Iframe: true, // <iframe>
@@ -47,15 +47,19 @@ func (p *HTMLParser) Parse(r io.Reader) error {
 	for ; tType != html.ErrorToken; tType = tokenizer.Next() {
 		if tType == html.StartTagToken {
 			token := tokenizer.Token()
-			if _, ok := HREF_ATOMS[token.DataAtom]; ok {
+			if _, ok := HrefAtoms[token.DataAtom]; ok {
 				p.extractAndAddLink(token, "href")
-			} else if _, ok := SRC_ATOMS[token.DataAtom]; ok {
+			} else if _, ok := SrcAtoms[token.DataAtom]; ok {
 				p.extractAndAddLink(token, "src")
 			}
 		}
 	}
 
-	return tokenizer.Err()
+	err := tokenizer.Err()
+	if err == io.EOF {
+		return nil
+	}
+	return err
 }
 
 // GetLinks возвращает слайс строк - ссылок, которые были найдены в HTML-документе
@@ -65,7 +69,7 @@ func (p *HTMLParser) GetLinks() []string {
 	}
 
 	links := make([]string, 0, len(p.Links))
-	for link, _ := range p.Links {
+	for link := range p.Links {
 		links = append(links, link)
 	}
 	return links

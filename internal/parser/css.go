@@ -48,7 +48,7 @@ func (p *CSSParser) GetLinks() []string {
 	}
 
 	links := make([]string, 0, len(p.Links))
-	for link, _ := range p.Links {
+	for link := range p.Links {
 		links = append(links, link)
 	}
 	return links

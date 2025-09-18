@@ -1,34 +1,36 @@
 package downloader
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
-type Downloader interface {
-	Get(url string) (io.ReadCloser, error)
-	IsHTML() bool
-	IsCSS() bool
-}
-
-type Impl struct{}
-
-func NewDownloader() Downloader {
-	return &Impl{}
-}
-
-func (d *Impl) Get(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
+func Get(ctx context.Context, url string) (io.ReadCloser, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return resp.Body, nil
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		return nil, "", fmt.Errorf("status code %d", resp.StatusCode)
+	}
+
+	return resp.Body, resp.Header.Get("Content-Type"), nil
 }
 
-func (d *Impl) IsHTML() bool {
-	return true
+func IsHTML(contentType string) bool {
+	return strings.HasPrefix(contentType, "text/html")
 }
 
-func (d *Impl) IsCSS() bool {
-	return true
+func IsCSS(contentType string) bool {
+	return strings.HasPrefix(contentType, "text/css")
 }

@@ -4,57 +4,90 @@ import (
 	"errors"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
+// Normalizer интерфейс нормализации URL
 type Normalizer interface {
-	Normalize(baseURL, ref string) (string, error)
-	SavePath() ([]string, error)
+	Normalize(baseURL, ref string) (Normalizer, error)
+	SavePath() (string, error)
+	GetHost() string
+	String() string
 }
 
-type DefaultNormalizer struct {
+// NormalizedUrl структура для нормализации URL
+type NormalizedUrl struct {
 	URL *url.URL
 }
 
-func New() *DefaultNormalizer {
-	return &DefaultNormalizer{}
-}
-
-func (n *DefaultNormalizer) Normalize(baseURL, ref string) (string, error) {
+// NewNormalizedUrl инициализация NormalizedUrl
+func NewNormalizedUrl(baseURL string) (*NormalizedUrl, error) {
 	base, err := url.Parse(baseURL)
 	if err != nil {
-		return "", err
-	}
-	u, err := base.Parse(ref)
-	if err != nil {
-		return "", err
-	}
-	if u.Host != base.Host {
-		return "", nil
+		return nil, err
 	}
 
-	u.Fragment = "" // отбрасываем #anchor
-	// приводим схему и хост к нижнему регистру
-	u.Scheme = strings.ToLower(u.Scheme)
-	u.Host = strings.ToLower(u.Host)
-	// удаляем лишние слэши
-	u.Path = path.Clean(u.Path)
+	base.Fragment = ""
+	base.Scheme = strings.ToLower(base.Scheme)
+	base.Host = strings.ToLower(base.Host)
 
-	n.URL = u
-
-	return u.String(), nil
+	return &NormalizedUrl{URL: base}, nil
 }
 
-func (n *DefaultNormalizer) SavePath() ([]string, error) {
-	if n.URL == nil {
-		return nil, errors.New("empty URL")
+// Normalize нормализация URL
+func (n *NormalizedUrl) Normalize(ref string) (*NormalizedUrl, error) {
+	u, err := n.URL.Parse(ref)
+	if err != nil {
+		return nil, err
 	}
 
-	var savePath []string
+	u.Fragment = ""
+	u.Scheme = strings.ToLower(u.Scheme)
+	u.Host = strings.ToLower(u.Host)
 
-	for _, part := range strings.Split(n.URL.Host+n.URL.Path, "/") {
-		savePath = append(savePath, part)
+	if u.Host != n.URL.Host {
+		return nil, errors.New("host does not match")
 	}
 
-	return savePath, nil
+	if u.Path != "" {
+		u.Path = path.Clean(u.Path)
+	}
+
+	return &NormalizedUrl{URL: u}, nil
+}
+
+// String преобразование структуры в строку
+func (n *NormalizedUrl) String() string {
+	return n.URL.String()
+}
+
+// SavePath возвращает путь по которому нужно сохранить документ
+func (n *NormalizedUrl) SavePath() (string, error) {
+	return buildSavePath(n.URL)
+}
+
+// GetHost возвращает хост адреса
+func (n *NormalizedUrl) GetHost() string {
+	return n.URL.Host
+}
+
+// buildSavePath делает путь для сохранения
+func buildSavePath(u *url.URL) (string, error) {
+	host := u.Host
+	p := u.Path
+
+	// Если пусто или "/" -> index.html
+	if p == "" || strings.HasSuffix(p, "/") {
+		return filepath.Join(host, p, "index.html"), nil
+	}
+
+	ext := filepath.Ext(p)
+	if ext == "" {
+		// нет расширения, считаем что это html -> about/index.html
+		return filepath.Join(host, p, "index.html"), nil
+	}
+
+	// есть расширение (css, js, png, html и т.д.)
+	return filepath.Join(host, p), nil
 }

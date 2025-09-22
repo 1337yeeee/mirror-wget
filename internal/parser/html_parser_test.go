@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestHTMLParser_Parse тест для html парсера
 func TestHTMLParser_Parse(t *testing.T) {
 	tests := []struct {
 		name   string

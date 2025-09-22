@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 )
 
+// Save сохраняет файл, если необходимо создает директории по пути к файлу
 func Save(path string, data []byte) (int, error) {
 	dir := filepath.Dir(path)
 	err := os.MkdirAll(dir, os.ModePerm)

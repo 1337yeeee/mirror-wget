@@ -41,25 +41,27 @@ func NewHTMLParser() LinkParser {
 
 // Parse парсит HTML-документ
 func (p *HTMLParser) Parse(r io.Reader) error {
-	tokenizer := html.NewTokenizer(r)
-	tType := tokenizer.Next()
+	doc, err := html.Parse(r)
+	if err != nil {
+		return err
+	}
 
-	for ; tType != html.ErrorToken; tType = tokenizer.Next() {
-		if tType == html.StartTagToken {
-			token := tokenizer.Token()
-			if _, ok := HrefAtoms[token.DataAtom]; ok {
-				p.extractAndAddLink(token, "href")
-			} else if _, ok := SrcAtoms[token.DataAtom]; ok {
-				p.extractAndAddLink(token, "src")
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode {
+			for _, attr := range n.Attr {
+				if attr.Key == "href" || attr.Key == "src" {
+					p.extractAndAddLink(attr.Val)
+				}
 			}
 		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
 	}
+	walk(doc)
 
-	err := tokenizer.Err()
-	if err == io.EOF {
-		return nil
-	}
-	return err
+	return nil
 }
 
 // GetLinks возвращает слайс строк - ссылок, которые были найдены в HTML-документе
@@ -75,14 +77,9 @@ func (p *HTMLParser) GetLinks() []string {
 	return links
 }
 
-// extractAndAddLink извлекает ссылку из атрибута (attrKey) токена (token) и добавляет ее к множеству ссылок
-func (p *HTMLParser) extractAndAddLink(token html.Token, attrKey string) {
-	for _, attr := range token.Attr {
-		if attr.Key == attrKey {
-			link := strings.TrimRight(attr.Val, "/")
-			link = strings.TrimSpace(link)
-			p.Links[link] = true
-			return
-		}
-	}
+// extractAndAddLink добавляет ссылку к множеству ссылок
+func (p *HTMLParser) extractAndAddLink(link string) {
+	link = strings.TrimRight(link, "/")
+	link = strings.TrimSpace(link)
+	p.Links[link] = true
 }

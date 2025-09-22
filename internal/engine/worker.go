@@ -16,30 +16,38 @@ import (
 	"time"
 )
 
+// Worker исполняет загрузку, парсинг и сохранение файла
 type Worker struct {
-	baseURL     *normalizer.NormalizedUrl
-	URL         *normalizer.NormalizedUrl
-	wg          *sync.WaitGroup
-	activeTasks *int32
-	queue       queue.Queue
-	stage       int
+	baseURL      *normalizer.NormalizedUrl
+	URL          *normalizer.NormalizedUrl
+	wg           *sync.WaitGroup
+	activeTasks  *int32
+	queue        queue.Queue
+	storageQueue queue.Queue
+	downloadMap  *sync.Map
 }
 
+// NewWorker инициализирует Worker
 func NewWorker(
 	baseURL *normalizer.NormalizedUrl,
 	wg *sync.WaitGroup,
 	activeTasks *int32,
-	queue queue.Queue) *Worker {
+	queue queue.Queue,
+	storageQueue queue.Queue,
+	downloadMap *sync.Map) *Worker {
 	return &Worker{
-		baseURL:     baseURL,
-		URL:         baseURL,
-		wg:          wg,
-		activeTasks: activeTasks,
-		queue:       queue,
+		baseURL:      baseURL,
+		URL:          baseURL,
+		wg:           wg,
+		activeTasks:  activeTasks,
+		queue:        queue,
+		downloadMap:  downloadMap,
+		storageQueue: storageQueue,
 	}
 }
 
-func (w *Worker) worker(ctx context.Context, id int, jobs <-chan queue.Item) {
+// Worker основной внешний метод воркера
+func (w *Worker) Worker(ctx context.Context, id int, jobs <-chan queue.Item) {
 	defer w.wg.Done()
 
 	log.Printf("worker %d starting\n", id)
@@ -60,10 +68,10 @@ func (w *Worker) worker(ctx context.Context, id int, jobs <-chan queue.Item) {
 	}
 }
 
+// processItem работает над объектом, выполняет последовательность действий для задачи
 func (w *Worker) processItem(ctx context.Context, item queue.Item) {
 	log.Printf("Processing: %s (depth: %d)\n", item.URL, item.Depth)
 	w.URL = item.URL
-	w.stage = 0
 
 	var content []byte
 	var contentType string
@@ -107,15 +115,18 @@ func (w *Worker) processItem(ctx context.Context, item queue.Item) {
 	}
 }
 
+// handleLinks помещает ссылки в очередь
 func (w *Worker) handleLinks(links []string, depth int) {
+	fmt.Printf("\n\n!=!=!=!=!=!=!=!=!=!=!URL: %v\n\n", w.URL.String())
 	for _, link := range links {
-		newNorm, err := w.baseURL.Normalize(link)
+		newNorm, err := w.URL.Normalize(link)
 		if err != nil {
 			log.Printf("Normalize failed: %s - %v\n", link, err)
 			continue
 		}
 
 		if newNorm.GetHost() == w.baseURL.GetHost() {
+			fmt.Printf("Link: %s -> %s\n", link, newNorm.String())
 			queueItem := queue.Item{
 				URL:   newNorm,
 				Depth: depth + 1,
@@ -126,8 +137,10 @@ func (w *Worker) handleLinks(links []string, depth int) {
 			}
 		}
 	}
+	fmt.Printf("\n!=!=!=!=!=!=!=!=!=!=!\n\n")
 }
 
+// downloadFile скачивает файл
 func (w *Worker) downloadFile(ctx context.Context, item queue.Item) ([]byte, string, error) {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -148,6 +161,7 @@ func (w *Worker) downloadFile(ctx context.Context, item queue.Item) ([]byte, str
 	return contentBytes, contentType, nil
 }
 
+// saveFile сохраняет файл
 func (w *Worker) saveFile(content []byte, item queue.Item) error {
 	filePath, err := item.URL.SavePath()
 	if err != nil {
@@ -161,9 +175,13 @@ func (w *Worker) saveFile(content []byte, item queue.Item) error {
 	}
 	log.Printf("Saved %s (%d bytes)\n", item.URL, n)
 
+	w.downloadMap.Store(item.URL.String(), filePath)
+	w.storageQueue.Push(item)
+
 	return nil
 }
 
+// parseFile парсит файл, извлекает ссылки из файла
 func (w *Worker) parseFile(content []byte, contentType string, item queue.Item) ([]string, error) {
 	var p parser.LinkParser
 	if downloader.IsHTML(contentType) {

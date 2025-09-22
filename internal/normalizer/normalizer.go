@@ -8,14 +8,6 @@ import (
 	"strings"
 )
 
-// Normalizer интерфейс нормализации URL
-type Normalizer interface {
-	Normalize(baseURL, ref string) (Normalizer, error)
-	SavePath() (string, error)
-	GetHost() string
-	String() string
-}
-
 // NormalizedUrl структура для нормализации URL
 type NormalizedUrl struct {
 	URL *url.URL
@@ -32,6 +24,7 @@ func NewNormalizedUrl(baseURL string) (*NormalizedUrl, error) {
 	base.Scheme = strings.ToLower(base.Scheme)
 	base.Host = strings.ToLower(base.Host)
 
+	// Убираем логику автоматического добавления слеша - это должно определяться сервером
 	return &NormalizedUrl{URL: base}, nil
 }
 
@@ -54,12 +47,21 @@ func (n *NormalizedUrl) Normalize(ref string) (*NormalizedUrl, error) {
 		u.Path = path.Clean(u.Path)
 	}
 
+	// если путь есть, но не заканчивается на "/", и расширения нет — считаем директорией
+	if u.Path == "" || u.Path != "" && !strings.HasSuffix(u.Path, "/") && filepath.Ext(u.Path) == "" {
+		u.Path += "/"
+	}
+
 	return &NormalizedUrl{URL: u}, nil
 }
 
-// String преобразование структуры в строку
+// String преобразование структуры в строку - ВАЖНО: не меняем оригинальный URL!
 func (n *NormalizedUrl) String() string {
-	return n.URL.String()
+	str := n.URL.String()
+	if strings.HasSuffix(str, "index.html") {
+		str = strings.TrimSuffix(str, "index.html")
+	}
+	return str
 }
 
 // SavePath возвращает путь по которому нужно сохранить документ
@@ -77,17 +79,17 @@ func buildSavePath(u *url.URL) (string, error) {
 	host := u.Host
 	p := u.Path
 
-	// Если пусто или "/" -> index.html
+	// Если путь пустой или заканчивается на / - это директория
 	if p == "" || strings.HasSuffix(p, "/") {
 		return filepath.Join(host, p, "index.html"), nil
 	}
 
+	// Если есть расширение - это файл
 	ext := filepath.Ext(p)
-	if ext == "" {
-		// нет расширения, считаем что это html -> about/index.html
-		return filepath.Join(host, p, "index.html"), nil
+	if ext != "" {
+		return filepath.Join(host, p), nil
 	}
 
-	// есть расширение (css, js, png, html и т.д.)
-	return filepath.Join(host, p), nil
+	// Нет расширения - считаем директорией
+	return filepath.Join(host, p, "index.html"), nil
 }

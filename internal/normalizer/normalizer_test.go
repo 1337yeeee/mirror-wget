@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestNormalize тест нормализованного пути и пути сохранения
 func TestNormalize(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -17,7 +18,7 @@ func TestNormalize(t *testing.T) {
 			name:     "absolute url https",
 			base:     "https://Example.COM",
 			ref:      "https://Example.COM/foo/bar",
-			expected: "https://example.com/foo/bar",
+			expected: "https://example.com/foo/bar/",
 			savePath: "example.com/foo/bar/index.html",
 		},
 		{
@@ -38,7 +39,7 @@ func TestNormalize(t *testing.T) {
 			name:     "with fragment",
 			base:     "https://example.com",
 			ref:      "/index.html#section",
-			expected: "https://example.com/index.html",
+			expected: "https://example.com/",
 			savePath: "example.com/index.html",
 		},
 		{
@@ -52,7 +53,14 @@ func TestNormalize(t *testing.T) {
 			name:     "host",
 			base:     "https://example.com",
 			ref:      "",
-			expected: "https://example.com",
+			expected: "https://example.com/",
+			savePath: "example.com/index.html",
+		},
+		{
+			name:     "host with slash",
+			base:     "https://example.com/",
+			ref:      "",
+			expected: "https://example.com/",
 			savePath: "example.com/index.html",
 		},
 		{
@@ -61,6 +69,13 @@ func TestNormalize(t *testing.T) {
 			ref:      "",
 			expected: "https://example.com/style.css",
 			savePath: "example.com/style.css",
+		},
+		{
+			name:     "ref local ./",
+			base:     "http://localhost:8080/lvl1/lvl2/",
+			ref:      "./eggs.html",
+			expected: "http://localhost:8080/lvl1/lvl2/eggs.html",
+			savePath: "localhost:8080/lvl1/lvl2/eggs.html",
 		},
 	}
 
@@ -90,6 +105,7 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
+// TestNormalizeInvalidBase тест ошибка невалидного url
 func TestNormalizeInvalidBase(t *testing.T) {
 	_, err := NewNormalizedUrl(":://bad_url")
 	if err == nil {
@@ -97,6 +113,7 @@ func TestNormalizeInvalidBase(t *testing.T) {
 	}
 }
 
+// TestNormalizeInvalidRef тест невалидного относительного пути
 func TestNormalizeInvalidRef(t *testing.T) {
 	n, err := NewNormalizedUrl("https://example.com")
 	if err != nil {

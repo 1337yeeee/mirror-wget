@@ -5,7 +5,7 @@ import (
 	"flag"
 )
 
-const DefaultLevel = 1
+const DefaultLevel = -1
 
 // Config конфигурация утилиты
 type Config struct {
@@ -15,16 +15,18 @@ type Config struct {
 
 // NewConfig собирает конфигурацию утилиты из флагов и аргументов командной строки
 func NewConfig() (*Config, error) {
-	flag.Parse()
-	args := flag.Args()
+	var config Config
 
+	level := flag.Int("l", DefaultLevel, "level of recursion")
+	flag.Parse()
+
+	args := flag.Args()
 	if len(args) == 0 {
 		return nil, errors.New("no URL provided")
 	}
 
-	var config Config
+	config.Level = *level
 	config.URL = args[0]
-	config.Level = DefaultLevel
 
 	return &config, nil
 }

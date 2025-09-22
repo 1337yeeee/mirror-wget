@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestCSSParser_Parse тестирование CSS парсера
 func TestCSSParser_Parse(t *testing.T) {
 	tests := []struct {
 		name   string

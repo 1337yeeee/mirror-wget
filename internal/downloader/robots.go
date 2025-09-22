@@ -9,7 +9,8 @@ import (
 	"github.com/temoto/robotstxt"
 )
 
-const UserAgent = "mirror-wget/0.1 (+https://github.com/yourname/mirror-wget)"
+// UserAgent пользовательский агент для выполнения http запросов
+const UserAgent = "mirror-wget/0.1 (+https://github.com/1337yeeee/mirror-wget)"
 
 // Robots структура для работы с robots.txt
 type Robots struct {

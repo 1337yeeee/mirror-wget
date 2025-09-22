@@ -13,7 +13,7 @@ import (
 
 // StorageWorker структура для задач по изменению интернет-ссылок на локальные
 type StorageWorker struct {
-	baseURL     *normalizer.NormalizedUrl
+	baseURL     *normalizer.NormalizedURL
 	wg          *sync.WaitGroup
 	queue       queue.Queue
 	activeTasks *int32
@@ -22,7 +22,7 @@ type StorageWorker struct {
 
 // NewStorageWorker инициализирует StorageWorker
 func NewStorageWorker(
-	baseURL *normalizer.NormalizedUrl,
+	baseURL *normalizer.NormalizedURL,
 	wg *sync.WaitGroup,
 	queue queue.Queue,
 	activeTasks *int32,

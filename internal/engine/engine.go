@@ -14,11 +14,12 @@ import (
 	"time"
 )
 
+// SleepDuration длительность сна между проверками очереди
 const SleepDuration = 100 * time.Millisecond
 
 // Engine структура для управления dispatcher'ом
 type Engine struct {
-	baseURL     *normalizer.NormalizedUrl
+	baseURL     *normalizer.NormalizedURL
 	queue       queue.Queue
 	visited     *sync.Map
 	downloadMap *sync.Map
@@ -30,7 +31,7 @@ type Engine struct {
 }
 
 // NewEngine инициализирует Engine
-func NewEngine(URL *normalizer.NormalizedUrl, robotsTxt *downloader.Robots, numWorkers, maxDepth int) *Engine {
+func NewEngine(URL *normalizer.NormalizedURL, robotsTxt *downloader.Robots, numWorkers, maxDepth int) *Engine {
 	return &Engine{
 		baseURL:     URL,
 		queue:       queue.NewQueue(),
@@ -50,7 +51,7 @@ func Handle() error {
 		return err
 	}
 
-	normURL, err := normalizer.NewNormalizedUrl(config.URL)
+	normURL, err := normalizer.NewNormalizedURL(config.URL)
 	if err != nil {
 		return err
 	}

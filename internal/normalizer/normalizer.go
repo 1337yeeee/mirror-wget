@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-// NormalizedUrl структура для нормализации URL
-type NormalizedUrl struct {
+// NormalizedURL структура для нормализации URL
+type NormalizedURL struct {
 	URL *url.URL
 }
 
-// NewNormalizedUrl инициализация NormalizedUrl
-func NewNormalizedUrl(baseURL string) (*NormalizedUrl, error) {
+// NewNormalizedURL инициализация NormalizedURL
+func NewNormalizedURL(baseURL string) (*NormalizedURL, error) {
 	base, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, err
@@ -25,11 +25,11 @@ func NewNormalizedUrl(baseURL string) (*NormalizedUrl, error) {
 	base.Host = strings.ToLower(base.Host)
 
 	// Убираем логику автоматического добавления слеша - это должно определяться сервером
-	return &NormalizedUrl{URL: base}, nil
+	return &NormalizedURL{URL: base}, nil
 }
 
 // Normalize нормализация URL
-func (n *NormalizedUrl) Normalize(ref string) (*NormalizedUrl, error) {
+func (n *NormalizedURL) Normalize(ref string) (*NormalizedURL, error) {
 	u, err := n.URL.Parse(ref)
 	if err != nil {
 		return nil, err
@@ -52,11 +52,11 @@ func (n *NormalizedUrl) Normalize(ref string) (*NormalizedUrl, error) {
 		u.Path += "/"
 	}
 
-	return &NormalizedUrl{URL: u}, nil
+	return &NormalizedURL{URL: u}, nil
 }
 
 // String преобразование структуры в строку - ВАЖНО: не меняем оригинальный URL!
-func (n *NormalizedUrl) String() string {
+func (n *NormalizedURL) String() string {
 	str := n.URL.String()
 	if strings.HasSuffix(str, "index.html") {
 		str = strings.TrimSuffix(str, "index.html")
@@ -65,12 +65,12 @@ func (n *NormalizedUrl) String() string {
 }
 
 // SavePath возвращает путь по которому нужно сохранить документ
-func (n *NormalizedUrl) SavePath() (string, error) {
+func (n *NormalizedURL) SavePath() (string, error) {
 	return buildSavePath(n.URL)
 }
 
 // GetHost возвращает хост адреса
-func (n *NormalizedUrl) GetHost() string {
+func (n *NormalizedURL) GetHost() string {
 	return n.URL.Host
 }
 

@@ -18,8 +18,8 @@ import (
 
 // Worker исполняет загрузку, парсинг и сохранение файла
 type Worker struct {
-	baseURL      *normalizer.NormalizedUrl
-	URL          *normalizer.NormalizedUrl
+	baseURL      *normalizer.NormalizedURL
+	URL          *normalizer.NormalizedURL
 	wg           *sync.WaitGroup
 	activeTasks  *int32
 	queue        queue.Queue
@@ -29,7 +29,7 @@ type Worker struct {
 
 // NewWorker инициализирует Worker
 func NewWorker(
-	baseURL *normalizer.NormalizedUrl,
+	baseURL *normalizer.NormalizedURL,
 	wg *sync.WaitGroup,
 	activeTasks *int32,
 	queue queue.Queue,

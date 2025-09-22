@@ -9,13 +9,13 @@ import (
 
 // PathResolver отвечает за преобразование путей
 type PathResolver struct {
-	currentDocURL *normalizer.NormalizedUrl
+	currentDocURL *normalizer.NormalizedURL
 	downloadedMap *sync.Map
 	baseHost      string
 }
 
 // NewPathResolver инициализирует PathResolver
-func NewPathResolver(currentDocURL *normalizer.NormalizedUrl, downloadedMap *sync.Map) *PathResolver {
+func NewPathResolver(currentDocURL *normalizer.NormalizedURL, downloadedMap *sync.Map) *PathResolver {
 	return &PathResolver{
 		currentDocURL: currentDocURL,
 		downloadedMap: downloadedMap,
@@ -51,20 +51,19 @@ func (pr *PathResolver) Resolve(link string) (string, bool) {
 			return normLinkStr + fragment, true // если ошибка - возвращаем абсолютный путь
 		}
 		return relativePath + fragment, true
-	} else {
-		// ресурс НЕ скачан
-		if pr.isAbsoluteURL(link) {
-			// абсолютная ссылка на внешний ресурс - оставляем как есть
-			return link + fragment, false
-		} else {
-			// относительная ссылка на нескачанный ресурс - делаем абсолютной
-			return normLinkStr + fragment, true
-		}
 	}
+
+	// ресурс НЕ скачан
+	if pr.isAbsoluteURL(link) {
+		// абсолютная ссылка на внешний ресурс - оставляем как есть
+		return link + fragment, false
+	}
+	// относительная ссылка на нескачанный ресурс - делаем абсолютной
+	return normLinkStr + fragment, true
 }
 
 // makeRelativePath создает относительный путь от текущего документа к целевому
-func (pr *PathResolver) makeRelativePath(target *normalizer.NormalizedUrl) (string, error) {
+func (pr *PathResolver) makeRelativePath(target *normalizer.NormalizedURL) (string, error) {
 	currentPath, err := pr.currentDocURL.SavePath()
 	if err != nil {
 		return "", err

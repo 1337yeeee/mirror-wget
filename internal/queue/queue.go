@@ -7,7 +7,7 @@ import (
 
 // Item содержит ссылку и глубину рекурсии, на которой он был получен
 type Item struct {
-	URL   *normalizer.NormalizedUrl
+	URL   *normalizer.NormalizedURL
 	Depth int
 }
 

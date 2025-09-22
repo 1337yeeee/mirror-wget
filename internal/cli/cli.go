@@ -5,6 +5,7 @@ import (
 	"flag"
 )
 
+// DefaultLevel значение уровня рекурсии по умолчанию < 0 - нет ограничения
 const DefaultLevel = -1
 
 // Config конфигурация утилиты
